@@ -20,12 +20,40 @@ void close();
 SDL_Texture* loadTexture(std::string filePath);
 
 SDL_Window *window = NULL;
-SDL_Surface *screenSurface = NULL;
 SDL_Renderer* renderer = NULL;
 // Current displayed texture
 SDL_Texture* texture = NULL;
 SDL_Rect sourceRect = { 0, 0, 18, 18 };
 SDL_Rect destRect = { 0, 0, 18, 18 };
+
+// Size of tetris board
+const int boardX = 10;
+const int boardY = 20;
+
+// Create board and initialize all to 0
+int board[boardX][boardY] = {0};
+
+// Create a struct of x and y points
+// and creates two objects a and b of type Point
+// a - stores x,y coord of each box in tetris shape
+// 
+struct Point
+{int x,y;} a[4], b[4]; 
+
+// Create the grid size and shapes for each tile
+int figures[7][4] = 
+{
+    1, 3, 5, 7, // I
+    2, 4, 5, 7, // Z
+    3, 5, 4, 6, // S
+    3, 5, 4, 7, // T
+    2, 3, 5, 7, // L
+    3, 5, 7, 6, // J
+    2, 3, 4, 5, // O
+};
+
+// Store ticks since last frame
+int ticksLastFrame = 0;
 
 bool init()
 {
@@ -155,8 +183,19 @@ int main()
 
             SDL_Event event;
 
+            int dx = 0;
+            bool rotate = 0;
+            bool rotateCalledOnce = false;
+            int colorNum = 1;
+            float timer = 0;
+            float delay = 0.3f;
+
             while (!quit)
             {
+                float time = (SDL_GetTicks() - ticksLastFrame) / 1000.0f;
+                ticksLastFrame = SDL_GetTicks();
+                timer += time;
+
                 SDL_PollEvent(&event);
                 
                 switch (event.type)
@@ -170,6 +209,23 @@ int main()
                     {
                         if (event.key.keysym.sym == SDLK_ESCAPE)
                             quit = true;
+                        else if (event.key.keysym.sym == SDLK_UP)
+                        {
+                            if (!rotateCalledOnce)
+                            {
+                                rotate = true;
+                                rotateCalledOnce = true;
+                            }
+                            std::cout << "Called rotate" << std::endl;
+                        }
+                        else if (event.key.keysym.sym == SDLK_LEFT)
+                            dx = -1;
+                        else if (event.key.keysym.sym == SDLK_RIGHT)
+                            dx = 1;
+                    }
+                    case SDL_KEYUP:
+                    {
+                        rotateCalledOnce = false;
                     }
                     default:
                     {
@@ -177,11 +233,62 @@ int main()
                     }
                 }
 
+                // Move Tiles
+                for (int i = 0; i < 4; ++i)
+                {
+                    a[i].x += dx;
+                }
+
+                // Rotate Tiles
+                if (rotate)
+                {
+                    Point centerOfRotation = a[1]; 
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        int x = a[i].y - centerOfRotation.y;
+                        int y = a[i].x - centerOfRotation.x;
+                        a[i].x = centerOfRotation.x - x;
+                        a[i].y = centerOfRotation.y + y;
+                    }
+                }
+
+                // Tick
+                if (timer > delay)
+                {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        a[i].y += 1;
+                    }
+                    timer = 0;
+                }
+
+                int n = 3;
+                if (a[0].x == 0)
+                {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        a[i].x = figures[n][i] % 2;
+                        a[i].y = figures[n][i] / 2;
+                    }
+                }
+
+                dx = 0;
+                rotate = 0;
+
+
                 // Clear screen
                 SDL_RenderClear( renderer );
+
+                for (int i = 0; i < 4; ++i)
+                {
+                    destRect.x = a[i].x * 18;
+                    destRect.y = a[i].y * 18;
+                    SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 
+                        0, NULL, SDL_FLIP_NONE);
+                }
                 
                 // Render texture to screen
-                SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 0, NULL, SDL_FLIP_NONE);
+                // SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 0, NULL, SDL_FLIP_NONE);
 
                 // Update screen
                 SDL_RenderPresent( renderer );
