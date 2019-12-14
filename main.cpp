@@ -24,6 +24,8 @@ SDL_Surface *screenSurface = NULL;
 SDL_Renderer* renderer = NULL;
 // Current displayed texture
 SDL_Texture* texture = NULL;
+SDL_Rect sourceRect = { 0, 0, 18, 18 };
+SDL_Rect destRect = { 0, 0, 18, 18 };
 
 bool init()
 {
@@ -133,7 +135,7 @@ void close()
     SDL_Quit();
 }
 
-int main( int argc, char* args[] )
+int main()
 {    
     // Start SDL and create window
     if (init() == false)
@@ -179,7 +181,7 @@ int main( int argc, char* args[] )
                 SDL_RenderClear( renderer );
                 
                 // Render texture to screen
-                SDL_RenderCopy( renderer, texture, NULL, NULL);
+                SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 0, NULL, SDL_FLIP_NONE);
 
                 // Update screen
                 SDL_RenderPresent( renderer );
