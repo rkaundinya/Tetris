@@ -196,40 +196,36 @@ int main()
                 ticksLastFrame = SDL_GetTicks();
                 timer += time;
 
-                SDL_PollEvent(&event);
-                
-                switch (event.type)
+                while ( SDL_PollEvent(&event) )
                 {
-                    case SDL_QUIT:
+                    switch (event.type)
                     {
-                        quit = true;
-                        break;
-                    }
-                    case SDL_KEYDOWN:
-                    {
-                        if (event.key.keysym.sym == SDLK_ESCAPE)
+                        case SDL_QUIT:
                             quit = true;
-                        else if (event.key.keysym.sym == SDLK_UP)
+                            break;
+                        case SDL_KEYDOWN:
                         {
-                            if (!rotateCalledOnce)
+                            switch ( event.key.keysym.sym )
                             {
-                                rotate = true;
-                                rotateCalledOnce = true;
+                                case SDLK_ESCAPE: 
+                                    quit = true;
+                                    break;
+                                case SDLK_UP: 
+                                    rotate = true;
+                                    break;
+
+                                case SDLK_LEFT:
+                                    dx = -1;
+                                    break;
+                                case SDLK_RIGHT: 
+                                    dx = 1;
+                                    break;
                             }
-                            std::cout << "Called rotate" << std::endl;
                         }
-                        else if (event.key.keysym.sym == SDLK_LEFT)
-                            dx = -1;
-                        else if (event.key.keysym.sym == SDLK_RIGHT)
-                            dx = 1;
-                    }
-                    case SDL_KEYUP:
-                    {
-                        rotateCalledOnce = false;
-                    }
-                    default:
-                    {
-                        break;
+                        default:
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -262,6 +258,7 @@ int main()
                     timer = 0;
                 }
 
+                // Place the tile in its correct x,y position
                 int n = 3;
                 if (a[0].x == 0)
                 {
