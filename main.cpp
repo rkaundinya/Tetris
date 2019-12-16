@@ -269,6 +269,12 @@ int main()
         {
             backgroundMusic.Load(musicFilepathUpdater(1).c_str());
             backgroundMusic2.Load(musicFilepathUpdater(2).c_str());
+            backgroundMusic3.Load(musicFilepathUpdater(3).c_str());
+            backgroundMusic4.Load(musicFilepathUpdater(4).c_str());
+            backgroundMusic5.Load(musicFilepathUpdater(5).c_str());
+            backgroundMusic6.Load(musicFilepathUpdater(6).c_str());
+            backgroundMusic7.Load(musicFilepathUpdater(7).c_str());
+            rotateSFX.Load("./Audio/RotateAudio.wav");
             backgroundMusic.Play();
 
             bool quit = false;
@@ -359,6 +365,7 @@ int main()
                 // Rotate Tiles
                 if (rotate)
                 {
+                    rotateSFX.Play();
                     Point centerOfRotation = a[1]; 
                     for (int i = 0; i < 4; ++i)
                     {
