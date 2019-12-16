@@ -1,17 +1,22 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <time.h>
+#include "Audio.h"
 
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 320;
+const int SCREEN_HEIGHT = 480;
+const int offsetX = 28;
+const int offsetY = 31;
+const int numOfAudioClips = 7;
 
 // Starts SDL and creates window
 bool init();
 
 // Loads media
-bool loadMedia();
+bool loadMedia(std::string filepath, SDL_Texture* &texture);
 
 // Frees media and shuts down SDL
 void close();
@@ -19,10 +24,18 @@ void close();
 // Loads image as texture
 SDL_Texture* loadTexture(std::string filePath);
 
+// Outputs audio filepath name according to number inputted
+std::string musicFilepathUpdater(int trackNumber);
+
+// Plays backgorund music with number indicated
+void playBackgroundMusicNumber(int number);
+
 SDL_Window *window = NULL;
 SDL_Renderer* renderer = NULL;
 // Current displayed texture
-SDL_Texture* texture = NULL;
+SDL_Texture* tiles = NULL;
+SDL_Texture* background = NULL;
+SDL_Texture* frame = NULL;
 SDL_Rect sourceRect = { 0, 0, 18, 18 };
 SDL_Rect destRect = { 0, 0, 18, 18 };
 
@@ -32,6 +45,13 @@ const int boardX = 10;
 
 // Create board and initialize all to 0
 int board[boardY][boardX] = {0};
+
+// Audio Files
+Audio backgroundMusic, backgroundMusic2, backgroundMusic3, backgroundMusic4, 
+    backgroundMusic5, backgroundMusic6, backgroundMusic7, rotateSFX;
+
+// Num of Line Counter
+int linesAchieved = 0;
 
 // Create a struct of x and y points
 // and creates two objects a and b of type Point
@@ -76,7 +96,7 @@ bool init()
     bool success = true;
 
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
         printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
         success = false;
@@ -118,13 +138,13 @@ bool init()
     return success;
 }
 
-bool loadMedia()
+bool loadMedia(std::string filepath, SDL_Texture* &texture)
 {
     // Loading success flag
     bool success = true;
 
     // Load PNG Texture
-    texture = loadTexture( "./images/tiles.png");
+    texture = loadTexture( filepath );
     if (texture == NULL)
     {
         std::cout << "Failed to load texture image!" << std::endl;
@@ -166,8 +186,12 @@ SDL_Texture* loadTexture(std::string path)
 
 void close()
 {
-    SDL_DestroyTexture(texture);
-    texture = NULL;
+    SDL_DestroyTexture(tiles);
+    SDL_DestroyTexture(background);
+    SDL_DestroyTexture(frame);
+    tiles = NULL;
+    background = NULL;
+    frame = NULL;
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -176,6 +200,51 @@ void close()
 
     IMG_Quit();
     SDL_Quit();
+}
+
+std::string musicFilepathUpdater(int trackNumber)
+{
+    std::stringstream filepathStringStream;
+    std::string filepathToOutput;
+
+    filepathStringStream << "./Audio/Track";
+    filepathStringStream << trackNumber;
+    filepathStringStream << ".wav";
+
+    filepathToOutput = filepathStringStream.str();
+
+    return filepathToOutput;
+}
+
+void playBackgroundMusicNumber(int number)
+{
+    switch (number)
+    {
+        case 2:
+            backgroundMusic.Stop();
+            backgroundMusic2.Play();
+            break;
+        case 3:
+            backgroundMusic2.Stop();
+            backgroundMusic3.Play();
+        case 4: 
+            backgroundMusic3.Stop();
+            backgroundMusic4.Play();
+            break;
+        case 5: 
+            backgroundMusic4.Stop();
+            backgroundMusic5.Play();
+            break;
+        case 6:
+            backgroundMusic5.Stop();
+            backgroundMusic6.Play();
+            break;
+        case 7:
+            backgroundMusic6.Stop();
+            backgroundMusic7.Play();
+        default:
+            break;
+    }
 }
 
 int main()
@@ -190,12 +259,18 @@ int main()
     else
     {
         // Load media
-        if ( !loadMedia() )
+        if ( !loadMedia( "./images/tiles.png", tiles ) || 
+            !loadMedia( "./images/background.png", background ) || 
+            !loadMedia( "./images/frame.png", frame ))
         {
             std::cout << "Failed to load media!\n";
         }
         else
         {
+            backgroundMusic.Load(musicFilepathUpdater(1).c_str());
+            backgroundMusic2.Load(musicFilepathUpdater(2).c_str());
+            backgroundMusic.Play();
+
             bool quit = false;
 
             SDL_Event event;
@@ -349,6 +424,12 @@ int main()
                     {
                         --line;
                     }
+                    else
+                    {
+                        linesAchieved++;
+                        playBackgroundMusicNumber(linesAchieved + 1);
+                    }
+                    
                 }
 
                 dx = 0;
@@ -357,6 +438,7 @@ int main()
 
                 // Clear screen
                 SDL_RenderClear( renderer );
+                SDL_RenderCopy( renderer, background, NULL, NULL );
 
                 // If current board position is empty, continue to draw rect 
                 // in next board position
@@ -370,9 +452,9 @@ int main()
                         // give number 1-7 * 18 which gives x coord of color tile
                         // in original tile sheet png
                         sourceRect.x = board[i][j] * 18;
-                        destRect.x = j * 18;
-                        destRect.y = i * 18;
-                        SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect,
+                        destRect.x = j * 18 + offsetX;
+                        destRect.y = i * 18 + offsetY;
+                        SDL_RenderCopyEx( renderer, tiles, &sourceRect, &destRect,
                             0, NULL, SDL_FLIP_NONE);
                     }
                 }
@@ -381,15 +463,16 @@ int main()
                 for (int i = 0; i < 4; ++i)
                 {
                     sourceRect.x = colorNum * 18;
-                    destRect.x = a[i].x * 18;
-                    destRect.y = a[i].y * 18;
-                    SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 
+                    destRect.x = a[i].x * 18 + offsetX;
+                    destRect.y = a[i].y * 18 + offsetY;
+                    SDL_RenderCopyEx( renderer, tiles, &sourceRect, &destRect, 
                         0, NULL, SDL_FLIP_NONE);
                 }
                 
                 // Render texture to screen
                 // SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 0, NULL, SDL_FLIP_NONE);
 
+                SDL_RenderCopy( renderer, frame, NULL, NULL );
                 // Update screen
                 SDL_RenderPresent( renderer );
             }
