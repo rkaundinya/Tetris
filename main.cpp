@@ -333,16 +333,23 @@ int main()
                     timer = 0;
                 }
 
-                // Place the tile in its correct x,y position
-                /* int n = 3;
-                if (a[0].x == 0)
+                // Check for lines
+                int line = boardY - 1;
+                for (int i = boardY - 1; i > 0; --i)
                 {
-                    for (int i = 0; i < 4; ++i)
+                    int count = 0;
+                    for (int j = 0; j < boardX; ++j)
                     {
-                        a[i].x = figures[colorNum][i] % 2;
-                        a[i].y = figures[colorNum][i] / 2;
+                        // if board tile is anything but 0 then increase count
+                        if (board[i][j])
+                            count++;
+                        board[line][j] = board[i][j];
                     }
-                } */
+                    if (count < boardX)
+                    {
+                        --line;
+                    }
+                }
 
                 dx = 0;
                 rotate = 0;
