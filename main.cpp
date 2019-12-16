@@ -27,11 +27,11 @@ SDL_Rect sourceRect = { 0, 0, 18, 18 };
 SDL_Rect destRect = { 0, 0, 18, 18 };
 
 // Size of tetris board
-const int boardX = 10;
 const int boardY = 20;
+const int boardX = 10;
 
 // Create board and initialize all to 0
-int board[boardX][boardY] = {0};
+int board[boardY][boardX] = {0};
 
 // Create a struct of x and y points
 // and creates two objects a and b of type Point
@@ -50,6 +50,21 @@ int figures[7][4] =
     2, 3, 5, 7, // L
     3, 5, 7, 6, // J
     2, 3, 4, 5, // O
+};
+
+// Check that tile is not on edge of board or touching another tile
+// If either of those are true, then return false
+bool check()
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        if (a[i].x < 0 || a[i].x >= boardX || a[i].y >= boardY)
+            return false;
+        else if (board[a[i].y][a[i].x])
+            return false;
+    }
+    
+    return true;
 };
 
 // Store ticks since last frame
@@ -164,9 +179,11 @@ void close()
 }
 
 int main()
-{    
+{
+    srand(time(0));
+
     // Start SDL and create window
-    if (init() == false)
+    if ( init() == false )
     {
         std::cout << "Failed to initialize!\n";
     }
@@ -183,12 +200,13 @@ int main()
 
             SDL_Event event;
 
+            const Uint8 *keystate = SDL_GetKeyboardState(NULL);
             int dx = 0;
             bool rotate = 0;
-            bool rotateCalledOnce = false;
             int colorNum = 1;
             float timer = 0;
             float delay = 0.3f;
+            bool firstTile = true;
 
             while (!quit)
             {
@@ -213,7 +231,6 @@ int main()
                                 case SDLK_UP: 
                                     rotate = true;
                                     break;
-
                                 case SDLK_LEFT:
                                     dx = -1;
                                     break;
@@ -229,10 +246,39 @@ int main()
                     }
                 }
 
+                if (firstTile == true)
+                {
+                    int randSeed = rand()%7;
+                    colorNum = 1 + randSeed;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        a[i].x = figures[randSeed][i] % 2;
+                        a[i].y = figures[randSeed][i] / 2;
+                    }
+                    firstTile = false;
+                }
+
+                if (keystate[SDL_SCANCODE_DOWN])
+                {
+                    delay = 0.05;
+                }
+
                 // Move Tiles
                 for (int i = 0; i < 4; ++i)
                 {
+                    b[i] = a[i];
                     a[i].x += dx;
+                }
+
+                // If tiles collided with edge or another tile, then reset 
+                // tile value to temporarily stored b[i] which stores the pre-collision
+                // tile location
+                if ( !check() )
+                {
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        a[i] = b[i];
+                    }
                 }
 
                 // Rotate Tiles
@@ -246,6 +292,16 @@ int main()
                         a[i].x = centerOfRotation.x - x;
                         a[i].y = centerOfRotation.y + y;
                     }
+                    // If tiles collided with edge or another tile, then reset 
+                    // tile value to temporarily stored b[i] which stores the pre-collision
+                    // tile location
+                    if ( !check() )
+                    {
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            a[i] = b[i];
+                        }
+                    }
                 }
 
                 // Tick
@@ -253,31 +309,71 @@ int main()
                 {
                     for (int i = 0; i < 4; ++i)
                     {
+                        b[i] = a[i];
                         a[i].y += 1;
+                    }    
+                    
+                    if ( !check() )
+                    {
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            board[b[i].y][b[i].x] = colorNum;
+                        }
+
+                        colorNum = 1 + rand()%7;
+                        int n = rand()%7;
+
+                        for (int i = 0; i < 4; ++i)
+                        {
+                            a[i].x = figures[n][i] % 2;
+                            a[i].y = figures[n][i] / 2;
+                        }
                     }
+
                     timer = 0;
                 }
 
                 // Place the tile in its correct x,y position
-                int n = 3;
+                /* int n = 3;
                 if (a[0].x == 0)
                 {
                     for (int i = 0; i < 4; ++i)
                     {
-                        a[i].x = figures[n][i] % 2;
-                        a[i].y = figures[n][i] / 2;
+                        a[i].x = figures[colorNum][i] % 2;
+                        a[i].y = figures[colorNum][i] / 2;
                     }
-                }
+                } */
 
                 dx = 0;
                 rotate = 0;
-
+                delay = 0.3f;
 
                 // Clear screen
                 SDL_RenderClear( renderer );
 
+                // If current board position is empty, continue to draw rect 
+                // in next board position
+                for (int i = 0; i < boardY; ++i)
+                {
+                    for (int j = 0; j < boardX; ++j)
+                    {
+                        if (board[i][j] == 0)
+                            continue;
+                        // b/c board stores colorNums, accessing element will
+                        // give number 1-7 * 18 which gives x coord of color tile
+                        // in original tile sheet png
+                        sourceRect.x = board[i][j] * 18;
+                        destRect.x = j * 18;
+                        destRect.y = i * 18;
+                        SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect,
+                            0, NULL, SDL_FLIP_NONE);
+                    }
+                }
+                
+                // Render all cubes of tile on screen
                 for (int i = 0; i < 4; ++i)
                 {
+                    sourceRect.x = colorNum * 18;
                     destRect.x = a[i].x * 18;
                     destRect.y = a[i].y * 18;
                     SDL_RenderCopyEx( renderer, texture, &sourceRect, &destRect, 
