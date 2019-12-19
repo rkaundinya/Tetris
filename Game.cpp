@@ -1,14 +1,17 @@
-#include "./Screen.h"
+#include "./Game.h"
 
-Screen::Screen() : m_window(NULL), m_renderer(NULL), m_texture(NULL) {}
+AssetManager* Game::assetManager = new AssetManager();
+SDL_Renderer* Game::renderer;
 
-bool Screen::Initialize()
+Game::Game() : _window(NULL) {}
+
+bool Game::Initialize()
 {
     // Initialization flag
     bool success = true;
 
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
         printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
         success = false;
@@ -21,10 +24,10 @@ bool Screen::Initialize()
         }
 
         // Create window
-        m_window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, 
+        _window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, 
             SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     
-        if (m_window == NULL)
+        if (_window == NULL)
         {
             printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
             success = false;
@@ -32,9 +35,9 @@ bool Screen::Initialize()
         else
         {
             // Create renderer for the window
-            m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
+            renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
 
-            if (m_renderer == NULL)
+            if (renderer == NULL)
             {
                 printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
                 success = false;
@@ -42,7 +45,7 @@ bool Screen::Initialize()
             else
             {
                 // Initialize renderer color
-                SDL_SetRenderDrawColor(m_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+                SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
             }
         }
     }
@@ -50,7 +53,7 @@ bool Screen::Initialize()
     return success;
 }
 
-bool Screen::ProcessEvents()
+bool Game::ProcessEvents()
 {
     SDL_Event event;
         
@@ -74,7 +77,7 @@ bool Screen::ProcessEvents()
     return true;
 }
 
-void Screen::Close()
+void Game::Close()
 {
     
 }

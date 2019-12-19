@@ -4,20 +4,23 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <iostream>
+#include "./AssetManager.h"
 
-class Screen
+class AssetManager;
+
+class Game
 {
     public: 
         const static int SCREEN_WIDTH = 800;
         const static int SCREEN_HEIGHT = 800;
+        static SDL_Renderer* renderer;
+        static AssetManager* assetManager;
 
     private: 
-        SDL_Window* m_window;
-        SDL_Renderer* m_renderer = NULL;
-        SDL_Texture* m_texture = NULL;
+        SDL_Window* _window;
     
     public: 
-        Screen();
+        Game();
         bool Initialize();
         // void Update();
         bool ProcessEvents();

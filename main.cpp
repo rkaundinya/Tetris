@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include <time.h>
+#include "Game.h"
 #include "Audio.h"
 
 const int SCREEN_WIDTH = 320;
@@ -250,6 +251,8 @@ void playBackgroundMusicNumber(int number)
 int main()
 {
     srand(time(0));
+
+    Game* game = new Game;
 
     // Start SDL and create window
     if ( init() == false )
