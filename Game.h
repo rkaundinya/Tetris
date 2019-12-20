@@ -11,19 +11,20 @@ class AssetManager;
 class Game
 {
     public: 
-        const static int SCREEN_WIDTH = 800;
-        const static int SCREEN_HEIGHT = 800;
         static SDL_Renderer* renderer;
         static AssetManager* assetManager;
+        static SDL_Event event;
 
     private: 
+        bool isRunning;
         SDL_Window* _window;
     
     public: 
         Game();
-        bool Initialize();
-        // void Update();
-        bool ProcessEvents();
+        bool IsRunning() const;
+        void Initialize(int windowWidth, int windowHeight);
+        void ProcessEvents();
+        void Render();
         void Close();
 
 

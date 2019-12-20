@@ -1,20 +1,27 @@
 #include "./Game.h"
+#include "./Constants.h"
 
 AssetManager* Game::assetManager = new AssetManager();
 SDL_Renderer* Game::renderer;
+SDL_Event Game::event;
 
-Game::Game() : _window(NULL) {}
+Game::Game() : _window(NULL), isRunning(false) {}
 
-bool Game::Initialize()
+bool Game::IsRunning() const
+{
+    return this->isRunning;
+}
+
+void Game::Initialize(int windowWidth, int windowHeight)
 {
     // Initialization flag
-    bool success = true;
+    isRunning = true;
 
     // Initialize SDL
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
         printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
-        success = false;
+        isRunning = false;
     }   
     else
     {
@@ -25,12 +32,12 @@ bool Game::Initialize()
 
         // Create window
         _window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, 
-            SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+            SDL_WINDOWPOS_UNDEFINED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
     
         if (_window == NULL)
         {
             printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
-            success = false;
+            isRunning = false;
         }
         else
         {
@@ -40,7 +47,7 @@ bool Game::Initialize()
             if (renderer == NULL)
             {
                 printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-                success = false;
+                isRunning = false;
             }
             else
             {
@@ -49,35 +56,40 @@ bool Game::Initialize()
             }
         }
     }
-
-    return success;
 }
 
-bool Game::ProcessEvents()
+void Game::ProcessEvents()
 {
-    SDL_Event event;
-        
+    SDL_PollEvent( &event );
     switch (event.type)
     {
         case SDL_QUIT:
         {
-            return false;
+            isRunning = false;
         }
         case SDL_KEYDOWN:
         {
             if (event.key.keysym.sym == SDLK_ESCAPE)
-                return false;
+            {
+                isRunning = false;
+            }
         }
         default:
         {
             break;
         }
     }
+}
 
-    return true;
+void Game::Render()
+{
+    SDL_RenderClear( renderer );
+    SDL_RenderPresent( renderer );
 }
 
 void Game::Close()
 {
-    
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(_window);
+    SDL_Quit();
 }
